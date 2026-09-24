@@ -54,8 +54,6 @@ button { cursor: pointer; }
 .summary b { font-variant-numeric: tabular-nums; color: var(--ink); margin-left: 2px; }
 .summary .over b { color: var(--due); }
 .summary .soon b { color: var(--warn); }
-.sound { flex: none; min-height: 32px; padding: 0 10px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 14px; color: var(--muted); }
-.sound.on { border-color: var(--felt); color: var(--felt); }
 .filters { display: flex; align-items: center; gap: 6px; overflow-x: auto; margin: 8px -14px 0; padding: 0 14px; scrollbar-width: none; }
 .filters::-webkit-scrollbar { display: none; }
 .fchip { flex: none; min-height: 34px; padding: 0 13px; border-radius: 17px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 15px; white-space: nowrap; }
@@ -100,6 +98,8 @@ button { cursor: pointer; }
 .btn.danger { color: var(--due); }
 .btn.armed { background: var(--due); border-color: var(--due); color: #fff; }
 .btn:disabled { opacity: .4; }
+.btn.sm { min-height: 36px; padding: 0 10px; font-size: 15px; border-radius: 10px; flex: none; }
+.dn { font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .reorder { display: grid; gap: 4px; }
 .reorder .btn { min-height: 34px; font-size: 14px; padding: 0 4px; border-radius: 9px; }
 .sheet-info { margin: 0 0 4px; color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; }
@@ -117,7 +117,7 @@ h2 .count { font-weight: 500; color: var(--muted); font-size: 16px; }
 .list > li:first-child { border-top: 0; }
 .row { display: flex; align-items: center; gap: 10px; }
 .grow { flex: 1; min-width: 0; }
-.dname { font-size: 19px; font-weight: 600; background: none; border: 0; padding: 0; text-align: left; }
+.dname { display: block; max-width: 100%; font-size: 19px; font-weight: 600; background: none; border: 0; padding: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pill { font-size: 14px; font-weight: 700; padding: 3px 10px; border-radius: 12px; background: var(--felt-soft); color: var(--felt); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pill.rest { background: transparent; border: 1px solid var(--line); color: var(--ink); }
 .pill.off { background: transparent; color: var(--muted); }
@@ -128,9 +128,9 @@ h2 .count { font-weight: 500; color: var(--muted); font-size: 16px; }
 .field { flex: 1; min-width: 0; min-height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 17px; }
 select.field { appearance: auto; }
 .edit { width: 100%; min-height: 38px; font-size: 18px; }
-.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper { display: flex; align-items: center; gap: 6px; flex: none; }
 .stepper .btn { min-height: 36px; width: 40px; padding: 0; }
-.stepper .val { min-width: 52px; text-align: center; font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; }
+.stepper .val { min-width: 44px; text-align: center; font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; }
 .sub { color: var(--muted); font-size: 14px; }
 .switch { width: 52px; height: 32px; border-radius: 16px; border: 0; background: var(--line); position: relative; flex: none; }
 .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 13px; background: #fff; transition: left .15s; }
@@ -173,7 +173,6 @@ select.field { appearance: auto; }
           <span class="soon">Soon<b>{{ counts.soon }}</b></span>
           <span>Empty<b>{{ counts.vacant }}</b></span>
         </div>
-        <button class="sound" :class="{on: s.settings.sound}" @click="toggleSound">{{ s.settings.sound ? 'Sound' : 'Muted' }}</button>
       </div>
       <div class="filters">
         <button class="fchip" :class="{on: filter==='all'}" @click="filter='all'">All<span>{{ s.tables.length }}</span></button>
@@ -228,34 +227,16 @@ select.field { appearance: auto; }
   <!-- DEALERS -->
   <main class="wrap" v-show="tab==='dealers'">
     <h1 class="page-title">Dealers</h1>
-    <div class="sub">{{ seatedCount }} at tables, {{ available.length }} available, {{ offDuty.length }} off</div>
-    <form class="add" @submit.prevent="addDealer">
-      <input class="field" v-model="newDealer" placeholder="Dealer name" autocomplete="off" enterkeyhint="done">
-      <button class="btn primary" type="submit">Add</button>
-    </form>
-    <p v-if="!s.dealers.length" class="empty">No dealers yet. New dealers start as available.</p>
+    <div class="sub" style="margin-bottom:12px">{{ seatedCount }} at tables, {{ available.length }} available, {{ offDuty.length }} off</div>
+    <p v-if="!s.dealers.length" class="empty">No dealers yet. <button class="link" @click="goTab('settings')">Add dealers in Settings</button></p>
     <ul class="list" v-if="s.dealers.length">
-      <li v-for="d in sortedDealers" :key="d.id">
-        <div class="row">
-          <div class="grow">
-            <input v-if="editId===d.id" :id="'edit-'+d.id" class="field edit" v-model="editName" @keydown.enter.prevent="saveName(d)" @blur="saveName(d)">
-            <button v-else class="dname" @click="startName(d)">{{ d.name }}</button>
-          </div>
-          <span class="pill" :class="{rest: dStatus(d)==='rest', off: dStatus(d)==='off'}">{{ dPill(d) }}</span>
-        </div>
-        <div class="stats">
-          <span>Dealt {{ fmtDur(workMs(d)) }}</span>
-          <span>Rest {{ fmtDur(breakMs(d)) }}</span>
-          <span v-if="d.lastTableId && dStatus(d)!=='table'">Last {{ tableName(d.lastTableId) }}</span>
-        </div>
-        <div class="tools">
-          <button v-if="d.off" class="btn" @click="clockIn(d)">Clock in</button>
-          <button v-else class="btn" @click="clockOut(d)">Clock out</button>
-          <button class="btn danger" :class="{armed: armed==='del-'+d.id}" @click="arm('del-'+d.id, () => deleteDealer(d))">{{ armed==='del-'+d.id ? 'Tap to delete' : 'Delete' }}</button>
-        </div>
+      <li v-for="d in sortedDealers" :key="d.id" class="row">
+        <span class="grow dn">{{ d.name }}</span>
+        <span class="pill" :class="{rest: dStatus(d)==='rest', off: dStatus(d)==='off'}">{{ dPill(d) }}</span>
+        <button v-if="d.off" class="btn sm" @click="clockIn(d)">Clock in</button>
+        <button v-else class="btn sm" @click="clockOut(d)">Clock out</button>
       </li>
     </ul>
-    <p class="hint" v-if="s.dealers.length">Tap a name to rename. Available dealers are listed longest rest first.</p>
   </main>
 
   <!-- HISTORY -->
@@ -278,52 +259,62 @@ select.field { appearance: auto; }
 
     <h2>Categories</h2>
     <ul class="list">
-      <li v-for="c in s.categories" :key="c.id">
-        <div class="row">
-          <div class="grow">
-            <input v-if="editId===c.id" :id="'edit-'+c.id" class="field edit" v-model="editName" @keydown.enter.prevent="saveName(c)" @blur="saveName(c)">
-            <button v-else class="dname" @click="startName(c)">{{ c.name }}</button>
-            <div class="sub">Swap every {{ c.interval }} min</div>
-          </div>
-          <div class="stepper">
-            <button class="btn" @click="c.interval = Math.max(5, c.interval - 5)">−</button>
-            <span class="val">{{ c.interval }}m</span>
-            <button class="btn" @click="c.interval = Math.min(180, c.interval + 5)">+</button>
-          </div>
+      <li v-for="c in s.categories" :key="c.id" class="row">
+        <div class="grow">
+          <input v-if="editId===c.id" :id="'edit-'+c.id" class="field edit" v-model="editName" @keydown.enter.prevent="saveName(c)" @blur="saveName(c)">
+          <button v-else class="dname" @click="startName(c)">{{ c.name }}</button>
         </div>
-        <div class="tools" v-if="s.categories.length > 1">
-          <button class="btn danger" :class="{armed: armed==='cdel-'+c.id}" @click="arm('cdel-'+c.id, () => deleteCategory(c))">{{ armed==='cdel-'+c.id ? 'Tap to delete' : 'Delete' }}</button>
+        <div class="stepper">
+          <button class="btn" @click="c.interval = Math.max(5, c.interval - 5)" :aria-label="'Shorter interval for ' + c.name">−</button>
+          <span class="val">{{ c.interval }}m</span>
+          <button class="btn" @click="c.interval = Math.min(180, c.interval + 5)" :aria-label="'Longer interval for ' + c.name">+</button>
         </div>
+        <button v-if="s.categories.length > 1" class="btn sm danger" :class="{armed: armed==='cdel-'+c.id}" @click="arm('cdel-'+c.id, () => deleteCategory(c))">{{ armed==='cdel-'+c.id ? 'Sure?' : 'Delete' }}</button>
       </li>
     </ul>
     <form class="add" @submit.prevent="addCategory">
       <input class="field" v-model="newCategory" placeholder="New category" autocomplete="off">
       <button class="btn" type="submit">Add</button>
     </form>
+    <p class="sub" style="margin-top:0">The number is the swap interval. Tap a name to rename.</p>
 
     <h2>Tables <span class="count">{{ s.tables.length }}</span></h2>
-    <form class="add" @submit.prevent="addTable" style="margin-top:0">
-      <input class="field" v-model="newTable" placeholder="Table name" autocomplete="off" style="flex:1.2">
-      <select class="field" v-model="newTableCat">
-        <option v-for="c in s.categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-      </select>
+    <form @submit.prevent="addTable">
+      <input class="field" style="width:100%" v-model="newTable" placeholder="Table names, e.g. A, B, C" autocomplete="off">
+      <div class="add" style="margin-top:8px">
+        <select class="field" v-model="newTableCat" aria-label="Category for new tables">
+          <option v-for="c in s.categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+        </select>
+        <button class="btn" type="submit">Add</button>
+      </div>
+    </form>
+    <p class="sub" style="margin-top:0">Separate names with commas to add several at once. Tap a table name on the Tables screen to rename, recategorize or delete it.</p>
+
+    <h2>Dealers <span class="count">{{ s.dealers.length }}</span></h2>
+    <form class="add" @submit.prevent="addDealer" style="margin-top:0">
+      <input class="field" v-model="newDealer" placeholder="Names, e.g. Aki, Ken, Mio" autocomplete="off" enterkeyhint="done">
       <button class="btn" type="submit">Add</button>
     </form>
-    <p class="sub" style="margin-top:0">Tap a table name on the Tables screen to rename, recategorize or delete it.</p>
+    <ul class="list" v-if="s.dealers.length">
+      <li v-for="d in s.dealers" :key="d.id" class="row">
+        <div class="grow">
+          <input v-if="editId===d.id" :id="'edit-'+d.id" class="field edit" v-model="editName" @keydown.enter.prevent="saveName(d)" @blur="saveName(d)">
+          <button v-else class="dname" @click="startName(d)">{{ d.name }}</button>
+        </div>
+        <button class="btn sm danger" :class="{armed: armed==='del-'+d.id}" @click="arm('del-'+d.id, () => deleteDealer(d))">{{ armed==='del-'+d.id ? 'Sure?' : 'Delete' }}</button>
+      </li>
+    </ul>
+    <p class="sub" v-if="s.dealers.length">Separate names with commas to add several at once. Tap a name to rename. New dealers start as available.</p>
 
-    <h2>Alerts</h2>
+    <h2>Display</h2>
     <ul class="list">
       <li class="row">
-        <div class="grow">Warn before swap</div>
+        <div class="grow">Warn before swap<div class="sub">Tables turn amber this many minutes before the swap</div></div>
         <div class="stepper">
           <button class="btn" @click="s.settings.warn = Math.max(0, s.settings.warn - 1)">−</button>
           <span class="val">{{ s.settings.warn }}m</span>
           <button class="btn" @click="s.settings.warn = Math.min(15, s.settings.warn + 1)">+</button>
         </div>
-      </li>
-      <li class="row">
-        <div class="grow">Sound<div class="sub">One beep at the warning, three when a swap is due</div></div>
-        <button class="switch" :class="{on: s.settings.sound}" @click="toggleSound" aria-label="Sound"></button>
       </li>
       <li class="row">
         <div class="grow">Keep screen on<div class="sub">While this page is open</div></div>
@@ -381,7 +372,7 @@ const { createApp } = Vue;
 const KEY = 'dealer-rotation-v2';
 const MIN = 60000;
 const uid = () => Math.random().toString(36).slice(2, 10);
-let audioCtx = null, wakeLock = null;
+let wakeLock = null;
 
 function defaultState() {
   const cs = { id: uid(), name: 'Championship', interval: 30 };
@@ -389,7 +380,7 @@ function defaultState() {
   const mk = (name, catId) => ({ id: uid(), name, catId, dealerId: null, startedAt: null });
   return {
     version: 2,
-    settings: { warn: 5, sound: true },
+    settings: { warn: 5 },
     categories: [cs, sp],
     tables: [mk('CS', cs.id), mk('A', sp.id), mk('B', sp.id), mk('C', sp.id)],
     dealers: [],
@@ -411,7 +402,7 @@ createApp({
     return {
       s, now: Date.now(), tab: 'tables', filter: 'all', reorder: false, modal: null,
       newDealer: '', newCategory: '', newTable: '', newTableCat: s.categories[0]?.id || null,
-      editId: null, editName: '', armed: null, wake: false, toast: '', alerted: {}
+      editId: null, editName: '', armed: null, wake: false, toast: ''
     };
   },
   computed: {
@@ -441,17 +432,10 @@ createApp({
     s: { deep: true, handler(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} } }
   },
   mounted() {
-    setInterval(() => { this.now = Date.now(); this.checkAlerts(); }, 500);
-    document.addEventListener('pointerdown', this.unlockAudio);
+    setInterval(() => { this.now = Date.now(); }, 500);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') { this.now = Date.now(); if (this.wake) this.requestWake(); }
     });
-    // don't beep for tables that were already due when the page opened
-    for (const t of this.s.tables) {
-      const x = this.st(t);
-      if (x.kind === 'over') { this.alerted[t.id + ':due:' + t.startedAt] = 1; this.alerted[t.id + ':warn:' + t.startedAt] = 1; }
-      if (x.kind === 'soon') this.alerted[t.id + ':warn:' + t.startedAt] = 1;
-    }
   },
   methods: {
     // ---------- lookup / format ----------
@@ -584,13 +568,23 @@ createApp({
       }
       this.modal = null;
     },
+    splitNames(str) {
+      return [...new Set(str.split(/[,、，]/).map(x => x.trim()).filter(Boolean))];
+    },
     addTable() {
-      const name = this.newTable.trim();
-      if (!name) return;
+      const names = this.splitNames(this.newTable);
+      if (!names.length) return;
       const catId = this.newTableCat || this.s.categories[0].id;
-      this.s.tables.push({ id: uid(), name, catId, dealerId: null, startedAt: null });
+      const exist = new Set(this.s.tables.map(t => t.name));
+      const add = names.filter(n => !exist.has(n));
+      add.forEach(name => this.s.tables.push({ id: uid(), name, catId, dealerId: null, startedAt: null }));
       this.newTable = '';
-      this.showToast(`${name} added`);
+      this.showToast(this.addedMsg(add.length, names.length - add.length, 'table'));
+    },
+    addedMsg(n, skipped, noun) {
+      let m = n ? `Added ${n} ${noun}${n === 1 ? '' : 's'}` : `No new ${noun}s added`;
+      if (skipped) m += `, skipped ${skipped} already in the list`;
+      return m;
     },
     toggleReorder() { this.reorder = !this.reorder; if (this.reorder) this.filter = 'all'; },
     moveTable(t, dir) {
@@ -617,10 +611,14 @@ createApp({
 
     // ---------- dealers ----------
     addDealer() {
-      const name = this.newDealer.trim();
-      if (!name) return;
-      this.s.dealers.push({ id: uid(), name, off: false, restSince: Date.now(), accWork: 0, accBreak: 0, lastTableId: null });
+      const names = this.splitNames(this.newDealer);
+      if (!names.length) return;
+      const exist = new Set(this.s.dealers.map(d => d.name));
+      const add = names.filter(n => !exist.has(n));
+      const now = Date.now();
+      add.forEach(name => this.s.dealers.push({ id: uid(), name, off: false, restSince: now, accWork: 0, accBreak: 0, lastTableId: null }));
       this.newDealer = '';
+      this.showToast(this.addedMsg(add.length, names.length - add.length, 'dealer'));
     },
     clockOut(d) {
       const now = Date.now(), t = this.seatedMap[d.id];
@@ -649,39 +647,6 @@ createApp({
     },
 
     // ---------- alerts ----------
-    toggleSound() { this.s.settings.sound = !this.s.settings.sound; this.unlockAudio(); if (this.s.settings.sound) this.beep(1); },
-    unlockAudio() {
-      try {
-        if (!audioCtx) { const C = window.AudioContext || window.webkitAudioContext; if (C) audioCtx = new C(); }
-        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-      } catch (e) {}
-    },
-    beep(count) {
-      if (!audioCtx || !this.s.settings.sound) return;
-      try {
-        const t0 = audioCtx.currentTime;
-        for (let i = 0; i < count; i++) {
-          const o = audioCtx.createOscillator(), g = audioCtx.createGain(), st = t0 + i * 0.35;
-          o.type = 'sine'; o.frequency.value = 880;
-          g.gain.setValueAtTime(0.0001, st);
-          g.gain.exponentialRampToValueAtTime(0.3, st + 0.02);
-          g.gain.exponentialRampToValueAtTime(0.0001, st + 0.22);
-          o.connect(g).connect(audioCtx.destination);
-          o.start(st); o.stop(st + 0.25);
-        }
-      } catch (e) {}
-    },
-    checkAlerts() {
-      let warn = false, due = false;
-      for (const t of this.s.tables) {
-        if (!t.dealerId) continue;
-        const x = this.st(t);
-        const kw = t.id + ':warn:' + t.startedAt, kd = t.id + ':due:' + t.startedAt;
-        if (x.kind === 'soon' && this.s.settings.warn > 0 && !this.alerted[kw]) { this.alerted[kw] = 1; warn = true; }
-        if (x.kind === 'over' && !this.alerted[kd]) { this.alerted[kd] = 1; this.alerted[kw] = 1; due = true; }
-      }
-      if (due) this.beep(3); else if (warn) this.beep(1);
-    },
     async requestWake() {
       try { wakeLock = await navigator.wakeLock.request('screen'); } catch (e) { this.wake = false; this.showToast('Could not keep the screen on'); }
     },
