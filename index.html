@@ -47,63 +47,64 @@ button { cursor: pointer; }
 .wrap { max-width: 760px; margin: 0 auto; padding: 0 14px 100px; }
 
 /* Header */
-.head { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 12px 0 10px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
-.head-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.head h1 { font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
-.sound { min-height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 15px; }
-.sound.on { border-color: var(--felt); color: var(--felt); }
-.filters { display: flex; gap: 8px; overflow-x: auto; margin: 12px -14px 0; padding: 0 14px; scrollbar-width: none; }
-.filters::-webkit-scrollbar { display: none; }
-.fchip { flex: none; min-height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 16px; white-space: nowrap; }
-.fchip span { font-weight: 500; opacity: .75; margin-left: 4px; font-variant-numeric: tabular-nums; }
-.fchip.on { background: var(--felt); border-color: var(--felt); color: var(--on-felt); }
-.summary { display: flex; align-items: center; gap: 14px; margin-top: 12px; font-size: 16px; color: var(--muted); }
-.summary b { font-variant-numeric: tabular-nums; color: var(--ink); margin-left: 3px; }
+.head { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 10px 0 8px; margin-bottom: 4px; }
+.head-top { display: flex; align-items: center; gap: 10px; }
+.head h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.01em; white-space: nowrap; }
+.summary { display: flex; gap: 9px; margin-left: auto; font-size: 14px; color: var(--muted); white-space: nowrap; }
+.summary b { font-variant-numeric: tabular-nums; color: var(--ink); margin-left: 2px; }
 .summary .over b { color: var(--due); }
 .summary .soon b { color: var(--warn); }
-.summary .links { margin-left: auto; display: flex; gap: 4px; }
-.link { background: none; border: 0; color: var(--felt); font-weight: 700; font-size: 16px; padding: 6px 6px; }
+.sound { flex: none; min-height: 32px; padding: 0 10px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 14px; color: var(--muted); }
+.sound.on { border-color: var(--felt); color: var(--felt); }
+.filters { display: flex; align-items: center; gap: 6px; overflow-x: auto; margin: 8px -14px 0; padding: 0 14px; scrollbar-width: none; }
+.filters::-webkit-scrollbar { display: none; }
+.fchip { flex: none; min-height: 34px; padding: 0 13px; border-radius: 17px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 15px; white-space: nowrap; }
+.fchip span { font-weight: 500; opacity: .75; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.fchip.on { background: var(--felt); border-color: var(--felt); color: var(--on-felt); }
+.link { flex: none; background: none; border: 0; color: var(--felt); font-weight: 700; font-size: 15px; padding: 6px 6px; white-space: nowrap; }
 .link.armed { color: var(--due); }
+.sep { flex: none; width: 1px; height: 20px; background: var(--line); margin: 0 2px; }
 
-/* Cards */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-.card { background: var(--surface); border: 2px solid var(--line); border-radius: 18px; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+/* Cards: 3 columns on phones */
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+@media (min-width: 640px) { .grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; } }
+.card { position: relative; overflow: hidden; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 6px 6px 9px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .card.soon { border-color: var(--warn); }
 .card.over { border-color: var(--due); }
 .card.vacant { border-style: dashed; }
-.c-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; }
-.c-name { font-size: 24px; font-weight: 700; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.c-cat { font-size: 14px; font-weight: 600; color: var(--felt); }
-.pencil { flex: none; width: 34px; height: 34px; margin: -6px -6px 0 0; border: 0; background: none; color: var(--muted); border-radius: 17px; font-size: 16px; }
-.timer { font-size: clamp(34px, 10.5vw, 46px); font-weight: 700; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.c-head { display: flex; align-items: baseline; gap: 4px; width: 100%; min-width: 0; background: none; border: 0; padding: 0 0 0 2px; text-align: left; }
+.c-name { flex: none; max-width: 62%; font-size: 17px; font-weight: 700; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-cat { flex: 1; min-width: 0; font-size: 12px; font-weight: 600; color: var(--felt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-more { flex: none; color: var(--muted); font-size: 15px; line-height: 1; }
+.timer { padding-left: 2px; font-size: clamp(24px, 7.6vw, 36px); font-weight: 700; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .card.soon .timer { color: var(--warn); }
 .card.over .timer { color: var(--due); }
 .card.vacant .timer { color: var(--line); }
-.since { font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: -4px; }
-.status { align-self: flex-start; font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: var(--field); color: var(--muted); font-variant-numeric: tabular-nums; }
+.status { min-height: 26px; display: flex; align-items: center; padding: 0 7px; border-radius: 8px; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.status { background: var(--field); color: var(--muted); }
 .card.soon .status { background: var(--warn-soft); color: var(--warn); }
 .card.over .status { background: var(--due-soft); color: var(--due); }
-.bar { height: 5px; background: var(--field); border-radius: 3px; overflow: hidden; }
+.bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--field); }
 .bar span { display: block; height: 100%; background: var(--felt); transition: width 1s linear; }
 .card.soon .bar span { background: var(--warn); }
 .card.over .bar span { background: var(--due); }
-.swap { min-height: 44px; border-radius: 12px; border: 0; background: var(--felt); color: var(--on-felt); font-weight: 700; font-size: 16px; padding: 0 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.card.over .swap { background: var(--due); color: #fff; }
 .sel-wrap { position: relative; }
 .sel-wrap select {
-  width: 100%; min-height: 48px; appearance: none; -webkit-appearance: none; border-radius: 12px;
-  border: 1px solid var(--line); background: var(--field); font-size: 19px; font-weight: 600; padding: 0 34px 0 12px;
+  width: 100%; min-height: 36px; appearance: none; -webkit-appearance: none; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--field); font-size: 16px; font-weight: 600; padding: 0 20px 0 7px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.sel-wrap::after { content: ""; position: absolute; right: 14px; top: 50%; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
-.c-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sel-wrap::after { content: ""; position: absolute; right: 8px; top: 50%; width: 6px; height: 6px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
 .btn { min-height: 42px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 16px; }
 .btn.primary { background: var(--felt); border-color: var(--felt); color: var(--on-felt); }
 .btn.danger { color: var(--due); }
 .btn.armed { background: var(--due); border-color: var(--due); color: #fff; }
 .btn:disabled { opacity: .4; }
-.reorder { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-
+.reorder { display: grid; gap: 4px; }
+.reorder .btn { min-height: 34px; font-size: 14px; padding: 0 4px; border-radius: 9px; }
+.sheet-info { margin: 0 0 4px; color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; }
+.inline { display: flex; gap: 8px; }
+.inline .field { flex: 1; }
 .empty { color: var(--muted); margin: 8px 0; }
 .hint { color: var(--muted); font-size: 15px; margin: 12px 0 0; }
 h2 { font-size: 19px; font-weight: 700; margin: 26px 0 10px; display: flex; align-items: baseline; gap: 8px; }
@@ -167,53 +168,41 @@ select.field { appearance: auto; }
     <header class="head">
       <div class="head-top">
         <h1>Dealer rotation</h1>
-        <button class="sound" :class="{on: s.settings.sound}" @click="toggleSound">{{ s.settings.sound ? 'Sound on' : 'Sound off' }}</button>
+        <div class="summary">
+          <span class="over">Over<b>{{ counts.over }}</b></span>
+          <span class="soon">Soon<b>{{ counts.soon }}</b></span>
+          <span>Empty<b>{{ counts.vacant }}</b></span>
+        </div>
+        <button class="sound" :class="{on: s.settings.sound}" @click="toggleSound">{{ s.settings.sound ? 'Sound' : 'Muted' }}</button>
       </div>
       <div class="filters">
         <button class="fchip" :class="{on: filter==='all'}" @click="filter='all'">All<span>{{ s.tables.length }}</span></button>
         <button v-for="c in s.categories" :key="c.id" class="fchip" :class="{on: filter===c.id}" @click="filter=c.id; reorder=false">
           {{ c.name }}<span>{{ s.tables.filter(t => t.catId===c.id).length }}</span>
         </button>
-      </div>
-      <div class="summary">
-        <span class="over">Over<b>{{ counts.over }}</b></span>
-        <span class="soon">Soon<b>{{ counts.soon }}</b></span>
-        <span>Vacant<b>{{ counts.vacant }}</b></span>
-        <span class="links">
-          <button class="link" :class="{armed: armed==='resetall'}" @click="arm('resetall', resetAllTimers)">{{ armed==='resetall' ? 'Tap to confirm' : 'Reset all' }}</button>
-          <button class="link" @click="toggleReorder">{{ reorder ? 'Done' : 'Order' }}</button>
-        </span>
+        <span class="sep"></span>
+        <button class="link" :class="{armed: armed==='resetall'}" @click="arm('resetall', resetAllTimers)">{{ armed==='resetall' ? 'Tap to confirm' : 'Reset all' }}</button>
+        <button class="link" @click="toggleReorder">{{ reorder ? 'Done' : 'Order' }}</button>
       </div>
     </header>
 
     <p class="empty" v-if="!visibleTables.length">No tables here. Add one in Settings.</p>
-    <p class="hint" v-if="!s.dealers.length" style="margin:0 0 12px">Add dealers in the Dealers tab to seat them.</p>
+    <p class="hint" v-if="!s.dealers.length" style="margin:0 0 10px">Add dealers in the Dealers tab to seat them.</p>
 
     <div class="grid">
       <article v-for="(tb, i) in visibleTables" :key="tb.id" class="card" :class="st(tb).kind">
-        <div class="c-head">
-          <div style="min-width:0">
-            <div class="c-name">{{ tb.name }}</div>
-            <div class="c-cat">{{ catName(tb.catId) }}</div>
-          </div>
-          <button class="pencil" @click="openEdit(tb)" :aria-label="'Edit ' + tb.name">✎</button>
-        </div>
+        <button class="c-head" @click="openTable(tb)" :aria-label="'Options for ' + tb.name">
+          <span class="c-name">{{ tb.name }}</span><span class="c-cat">{{ catName(tb.catId) }}</span><span class="c-more">⋯</span>
+        </button>
 
-        <template v-if="reorder">
-          <div class="reorder">
-            <button class="btn" :disabled="i===0" @click="moveTable(tb,-1)">Earlier</button>
-            <button class="btn" :disabled="i===visibleTables.length-1" @click="moveTable(tb,1)">Later</button>
-          </div>
-        </template>
+        <div class="reorder" v-if="reorder">
+          <button class="btn" :disabled="i===0" @click="moveTable(tb,-1)">Earlier</button>
+          <button class="btn" :disabled="i===visibleTables.length-1" @click="moveTable(tb,1)">Later</button>
+        </div>
 
         <template v-else>
           <div class="timer">{{ tb.dealerId ? fmtElapsed(st(tb).elapsed) : '--:--' }}</div>
-          <div class="since">{{ tb.dealerId ? 'since ' + fmtTime(tb.startedAt) : 'No dealer' }}</div>
           <span class="status">{{ statusText(tb) }}</span>
-          <div class="bar" v-if="tb.dealerId"><span :style="{width: Math.min(100, st(tb).elapsed / st(tb).interval * 100) + '%'}"></span></div>
-          <button class="swap" v-if="showSwap(tb)" @click="swapSuggested(tb)">
-            {{ tb.dealerId ? 'Swap to ' : 'Seat ' }}{{ dealerName(suggestions[tb.id]) }}
-          </button>
           <div class="sel-wrap">
             <select :value="tb.dealerId || ''" @change="onSelect(tb, $event)" :aria-label="'Dealer at ' + tb.name">
               <option value="">No dealer</option>
@@ -221,18 +210,19 @@ select.field { appearance: auto; }
               <optgroup label="Available" v-if="available.length">
                 <option v-for="d in available" :key="d.id" :value="d.id">{{ d.name }} ({{ fmtDur(restMs(d)) }} rest)</option>
               </optgroup>
+              <optgroup label="At other tables" v-if="seatedList.some(o => o.t.id !== tb.id)">
+                <option v-for="o in seatedList.filter(o => o.t.id !== tb.id)" :key="o.d.id" :value="o.d.id">{{ o.d.name }} (at {{ o.t.name }})</option>
+              </optgroup>
               <optgroup label="Off duty" v-if="offDuty.length">
                 <option v-for="d in offDuty" :key="d.id" :value="d.id">{{ d.name }}</option>
               </optgroup>
             </select>
           </div>
-          <div class="c-tools">
-            <button class="btn" @click="openTime(tb)" :disabled="!tb.dealerId">Set time</button>
-            <button class="btn" @click="resetTable(tb)" :disabled="!tb.dealerId">Reset</button>
-          </div>
+          <div class="bar" v-if="tb.dealerId"><span :style="{width: Math.min(100, st(tb).elapsed / st(tb).interval * 100) + '%'}"></span></div>
         </template>
       </article>
     </div>
+    <p class="hint" v-if="s.tables.length && !reorder">Tap a table name for start time, timer reset and table settings.</p>
   </main>
 
   <!-- DEALERS -->
@@ -265,7 +255,7 @@ select.field { appearance: auto; }
         </div>
       </li>
     </ul>
-    <p class="hint" v-if="s.dealers.length">Tap a name to rename. Available dealers are listed longest rest first, which is also the order used for swap suggestions.</p>
+    <p class="hint" v-if="s.dealers.length">Tap a name to rename. Available dealers are listed longest rest first.</p>
   </main>
 
   <!-- HISTORY -->
@@ -319,7 +309,7 @@ select.field { appearance: auto; }
       </select>
       <button class="btn" type="submit">Add</button>
     </form>
-    <p class="sub" style="margin-top:0">Rename, recategorize or delete a table with the ✎ on its card.</p>
+    <p class="sub" style="margin-top:0">Tap a table name on the Tables screen to rename, recategorize or delete it.</p>
 
     <h2>Alerts</h2>
     <ul class="list">
@@ -346,20 +336,21 @@ select.field { appearance: auto; }
     <button class="btn danger" :class="{armed: armed==='reset'}" @click="arm('reset', resetAll)">{{ armed==='reset' ? 'Tap to erase everything' : 'Reset all data' }}</button>
   </main>
 
-  <!-- MODALS -->
-  <div class="backdrop" v-if="modal" @click.self="modal=null">
-    <div class="modal" v-if="modal.type==='time'">
-      <h3>Set start time for {{ tableName(modal.tableId) }}</h3>
-      <label for="t-in">{{ dealerName(tableById(modal.tableId)?.dealerId) }} sat down at</label>
-      <input id="t-in" class="field" type="time" v-model="modal.value">
-      <div class="modal-actions">
-        <button class="btn" @click="modal=null">Cancel</button>
-        <button class="btn primary" @click="saveTime">Save</button>
-      </div>
-    </div>
-    <div class="modal" v-if="modal.type==='edit'">
-      <h3>Edit table</h3>
-      <label for="e-name">Name</label>
+  <!-- TABLE SHEET -->
+  <div class="backdrop" v-if="modal && mt" @click.self="modal=null">
+    <div class="modal">
+      <h3>{{ mt.name }} <span class="sub">{{ catName(mt.catId) }}</span></h3>
+      <template v-if="mt.dealerId">
+        <p class="sheet-info">{{ dealerName(mt.dealerId) }} since {{ fmtTime(mt.startedAt) }}, {{ fmtDur(st(mt).elapsed) }} at this table. {{ statusText(mt) }}.</p>
+        <label for="t-in">Sat down at</label>
+        <div class="inline">
+          <input id="t-in" class="field" type="time" v-model="modal.time">
+          <button class="btn" @click="saveTime">Set time</button>
+        </div>
+        <button class="btn" style="width:100%;margin-top:8px" @click="resetTable(mt); modal=null">Reset timer to now</button>
+      </template>
+      <p v-else class="sheet-info">No dealer seated.</p>
+      <label for="e-name">Table name</label>
       <input id="e-name" class="field" v-model="modal.name" autocomplete="off">
       <label for="e-cat">Category</label>
       <select id="e-cat" class="field" v-model="modal.catId">
@@ -426,6 +417,10 @@ createApp({
   computed: {
     visibleTables() { return this.filter === 'all' ? this.s.tables : this.s.tables.filter(t => t.catId === this.filter); },
     seatedMap() { const m = {}; for (const t of this.s.tables) if (t.dealerId) m[t.dealerId] = t; return m; },
+    seatedList() {
+      return this.s.tables.filter(t => t.dealerId).map(t => ({ t, d: this.dealerById(t.dealerId) })).filter(o => o.d);
+    },
+    mt() { return this.modal ? this.tableById(this.modal.tableId) : null; },
     seatedCount() { return Object.keys(this.seatedMap).length; },
     available() {
       return this.s.dealers.filter(d => !d.off && !this.seatedMap[d.id]).sort((a, b) => (a.restSince || 0) - (b.restSince || 0));
@@ -437,20 +432,6 @@ createApp({
       return c;
     },
     allOver() { return this.s.tables.filter(t => this.st(t).kind === 'over').length; },
-    // table id -> suggested dealer id (longest rest goes to the most urgent table)
-    suggestions() {
-      const need = this.s.tables.map(t => ({ t, x: this.st(t) })).filter(o => o.x.kind !== 'ok');
-      const rank = o => o.x.kind === 'over' ? 0 : o.x.kind === 'vacant' ? 1 : 2;
-      need.sort((a, b) => rank(a) - rank(b) || (a.x.kind === 'over' ? b.x.over - a.x.over : a.x.remain - b.x.remain));
-      const pool = [...this.available], out = {};
-      for (const { t } of need) {
-        if (!pool.length) break;
-        let i = pool.findIndex(d => d.lastTableId !== t.id);
-        if (i < 0) i = 0;
-        out[t.id] = pool.splice(i, 1)[0].id;
-      }
-      return out;
-    },
     sortedDealers() {
       const rank = d => this.dStatus(d) === 'rest' ? 0 : this.dStatus(d) === 'table' ? 1 : 2;
       return [...this.s.dealers].sort((a, b) => rank(a) - rank(b) || (a.restSince || 0) - (b.restSince || 0) || a.name.localeCompare(b.name));
@@ -510,12 +491,11 @@ createApp({
     },
     statusText(t) {
       const x = this.st(t);
-      if (x.kind === 'vacant') return 'Vacant';
-      if (x.kind === 'over') return 'Over by ' + this.fmtDur(x.over);
+      if (x.kind === 'vacant') return 'Empty';
+      if (x.kind === 'over') return 'Over ' + this.fmtDur(x.over);
       if (x.kind === 'soon') return 'Swap in ' + Math.max(1, Math.ceil(x.remain / MIN)) + 'm';
-      return 'Swap at ' + this.fmtTime(t.startedAt + x.interval);
+      return 'Next ' + this.fmtTime(t.startedAt + x.interval);
     },
-    showSwap(t) { return this.st(t).kind !== 'ok' && !!this.suggestions[t.id]; },
 
     // ---------- dealer state ----------
     dStatus(d) { return d.off ? 'off' : this.seatedMap[d.id] ? 'table' : 'rest'; },
@@ -540,25 +520,27 @@ createApp({
       if ((t.dealerId || null) === (dealerId || null)) return;
       const now = Date.now();
       const prev = t.dealerId ? this.unseat(t, now) : null;
-      let next = null;
+      let next = null, from = null;
       if (dealerId) {
         next = this.dealerById(dealerId);
         const other = this.seatedMap[dealerId];
-        if (other && other.id !== t.id) this.unseat(other, now);
-        if (next.off) { next.off = false; }
+        if (other && other.id !== t.id) {
+          // moving straight from another table: that table becomes vacant
+          from = other;
+          this.unseat(other, now);
+          this.log(other.name, `${next.name} moved to ${t.name}`);
+        }
+        if (next.off) next.off = false;
         else if (next.restSince) next.accBreak += now - next.restSince;
         next.restSince = null;
         t.dealerId = dealerId; t.startedAt = now;
       }
-      const text = prev && next ? `${prev.name} → ${next.name}` : next ? `${next.name} seated` : `${prev.name} left`;
+      let text = prev && next ? `${prev.name} → ${next.name}` : next ? `${next.name} seated` : `${prev.name} left`;
+      if (from) text += ` (from ${from.name})`;
       this.log(t.name, text);
-      delete this.alerted[t.id + ':warn:' + now];
+      if (from) this.showToast(`${next.name} moved from ${from.name}. ${from.name} is now empty.`);
     },
     onSelect(t, e) { this.seat(t, e.target.value || null); },
-    swapSuggested(t) {
-      const id = this.suggestions[t.id];
-      if (id) { this.seat(t, id); this.showToast(`${t.name}: ${this.dealerName(id)} seated`); }
-    },
     resetTable(t) {
       if (!t.dealerId) return;
       const now = Date.now(), d = this.dealerById(t.dealerId);
@@ -571,21 +553,24 @@ createApp({
       ts.forEach(t => this.resetTable(t));
       this.showToast(ts.length ? `Reset ${ts.length} ${ts.length === 1 ? 'timer' : 'timers'}` : 'No seated tables to reset');
     },
-    openTime(t) { this.modal = { type: 'time', tableId: t.id, value: this.fmtTime(t.startedAt) }; },
+    openTable(t) {
+      this.armed = null;
+      this.modal = { tableId: t.id, time: this.fmtTime(t.startedAt), name: t.name, catId: t.catId };
+    },
     saveTime() {
-      const t = this.tableById(this.modal.tableId);
-      const [h, m] = (this.modal.value || '').split(':').map(Number);
-      if (!t || !t.dealerId || isNaN(h) || isNaN(m)) { this.modal = null; return; }
+      const t = this.mt;
+      const [h, m] = (this.modal.time || '').split(':').map(Number);
+      if (!t || !t.dealerId || isNaN(h) || isNaN(m)) return;
       const d = new Date(); d.setHours(h, m, 0, 0);
       let ts = d.getTime();
       if (ts > Date.now() + MIN) ts -= 24 * 60 * MIN;
       t.startedAt = ts;
-      this.log(t.name, `Start time set to ${this.modal.value}`);
+      this.log(t.name, `Start time set to ${this.modal.time}`);
+      this.showToast(`${t.name}: start time set to ${this.modal.time}`);
       this.modal = null;
     },
 
     // ---------- tables ----------
-    openEdit(t) { this.armed = null; this.modal = { type: 'edit', tableId: t.id, name: t.name, catId: t.catId }; },
     saveEdit() {
       const t = this.tableById(this.modal.tableId);
       if (t) { const n = this.modal.name.trim(); if (n) t.name = n; t.catId = this.modal.catId; }
