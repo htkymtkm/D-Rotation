@@ -78,6 +78,7 @@ button { cursor: pointer; }
 .card.soon .timer { color: var(--warn); }
 .card.over .timer { color: var(--due); }
 .card.vacant .timer { color: var(--line); }
+.card.waiting .timer { color: var(--muted); }
 .status { min-height: 26px; display: flex; align-items: center; padding: 0 7px; border-radius: 8px; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .status { background: var(--field); color: var(--muted); }
 .card.soon .status { background: var(--warn-soft); color: var(--warn); }
@@ -99,9 +100,13 @@ button { cursor: pointer; }
 .btn.armed { background: var(--due); border-color: var(--due); color: #fff; }
 .btn:disabled { opacity: .4; }
 .btn.sm { min-height: 36px; padding: 0 10px; font-size: 15px; border-radius: 10px; flex: none; }
+.dstats { display: flex; flex-wrap: wrap; gap: 0 10px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 1px; }
 .dn { font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .reorder { display: grid; gap: 4px; }
 .reorder .btn { min-height: 34px; font-size: 14px; padding: 0 4px; border-radius: 9px; }
+.session { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 5px 5px 5px 12px; border-radius: 12px; background: var(--felt-soft); color: var(--felt); font-size: 15px; font-weight: 600; }
+.session span { flex: 1; min-width: 0; }
+.session b { font-variant-numeric: tabular-nums; }
 .sheet-info { margin: 0 0 4px; color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; }
 .inline { display: flex; gap: 8px; }
 .inline .field { flex: 1; }
@@ -183,6 +188,10 @@ select.field { appearance: auto; }
         <button class="link" :class="{armed: armed==='resetall'}" @click="arm('resetall', resetAllTimers)">{{ armed==='resetall' ? 'Tap to confirm' : 'Reset all' }}</button>
         <button class="link" @click="toggleReorder">{{ reorder ? 'Done' : 'Order' }}</button>
       </div>
+      <div class="session" v-if="sessionPending">
+        <span>Tournament starts at {{ fmtTime(s.session.startAt) }}, in <b>{{ fmtElapsed(s.session.startAt - now + 999) }}</b></span>
+        <button class="btn sm primary" @click="startSessionNow">Start now</button>
+      </div>
     </header>
 
     <p class="empty" v-if="!visibleTables.length">No tables here. Add one in Settings.</p>
@@ -200,7 +209,7 @@ select.field { appearance: auto; }
         </div>
 
         <template v-else>
-          <div class="timer">{{ tb.dealerId ? fmtElapsed(st(tb).elapsed) : '--:--' }}</div>
+          <div class="timer">{{ !tb.dealerId ? '--:--' : st(tb).kind==='waiting' ? '−' + fmtElapsed(st(tb).until) : fmtElapsed(st(tb).elapsed) }}</div>
           <span class="status">{{ statusText(tb) }}</span>
           <div class="sel-wrap">
             <select :value="tb.dealerId || ''" @change="onSelect(tb, $event)" :aria-label="'Dealer at ' + tb.name">
@@ -217,7 +226,7 @@ select.field { appearance: auto; }
               </optgroup>
             </select>
           </div>
-          <div class="bar" v-if="tb.dealerId"><span :style="{width: Math.min(100, st(tb).elapsed / st(tb).interval * 100) + '%'}"></span></div>
+          <div class="bar" v-if="tb.dealerId && st(tb).kind!=='waiting'"><span :style="{width: Math.min(100, st(tb).elapsed / st(tb).interval * 100) + '%'}"></span></div>
         </template>
       </article>
     </div>
@@ -227,11 +236,18 @@ select.field { appearance: auto; }
   <!-- DEALERS -->
   <main class="wrap" v-show="tab==='dealers'">
     <h1 class="page-title">Dealers</h1>
-    <div class="sub" style="margin-bottom:12px">{{ seatedCount }} at tables, {{ available.length }} available, {{ offDuty.length }} off</div>
+    <div class="sub" style="margin-bottom:12px">{{ seatedCount }} at tables, {{ available.length }} available, {{ offDuty.length }} off. Dealt and Rest are totals since each dealer was added.</div>
     <p v-if="!s.dealers.length" class="empty">No dealers yet. <button class="link" @click="goTab('settings')">Add dealers in Settings</button></p>
     <ul class="list" v-if="s.dealers.length">
       <li v-for="d in sortedDealers" :key="d.id" class="row">
-        <span class="grow dn">{{ d.name }}</span>
+        <div class="grow">
+          <div class="dn">{{ d.name }}</div>
+          <div class="dstats">
+            <span>Dealt {{ fmtDur(workMs(d)) }}</span>
+            <span>Rest {{ fmtDur(breakMs(d)) }}</span>
+            <span v-if="d.lastTableId && dStatus(d)!=='table'">Last {{ tableName(d.lastTableId) }}</span>
+          </div>
+        </div>
         <span class="pill" :class="{rest: dStatus(d)==='rest', off: dStatus(d)==='off'}">{{ dPill(d) }}</span>
         <button v-if="d.off" class="btn sm" @click="clockIn(d)">Clock in</button>
         <button v-else class="btn sm" @click="clockOut(d)">Clock out</button>
@@ -256,6 +272,22 @@ select.field { appearance: auto; }
   <!-- SETTINGS -->
   <main class="wrap" v-show="tab==='settings'">
     <h1 class="page-title">Settings</h1>
+
+    <h2>Tournament start</h2>
+    <ul class="list">
+      <li>
+        <div class="sheet-info" style="margin-bottom:8px">{{ sessionText }}</div>
+        <div class="inline">
+          <input class="field" type="time" v-model="sessionTime" aria-label="Tournament start time">
+          <button class="btn" @click="setSession">Set</button>
+        </div>
+        <div class="tools" v-if="s.session.startAt">
+          <button class="btn primary" v-if="sessionPending" @click="startSessionNow">Start now</button>
+          <button class="btn" :class="{armed: armed==='clearsess'}" @click="arm('clearsess', clearSession)">{{ armed==='clearsess' ? 'Tap to clear' : 'Clear' }}</button>
+        </div>
+      </li>
+    </ul>
+    <p class="sub">Before this time no dealt or rest time is counted, and tables you seat in advance all start their timers at this time.</p>
 
     <h2>Categories</h2>
     <ul class="list">
@@ -332,13 +364,14 @@ select.field { appearance: auto; }
     <div class="modal">
       <h3>{{ mt.name }} <span class="sub">{{ catName(mt.catId) }}</span></h3>
       <template v-if="mt.dealerId">
-        <p class="sheet-info">{{ dealerName(mt.dealerId) }} since {{ fmtTime(mt.startedAt) }}, {{ fmtDur(st(mt).elapsed) }} at this table. {{ statusText(mt) }}.</p>
+        <p class="sheet-info" v-if="st(mt).kind==='waiting'">{{ dealerName(mt.dealerId) }} starts at {{ fmtTime(tStart(mt)) }}, in {{ fmtDur(st(mt).until + 59999) }}{{ waitingForSession(mt) ? ', together with the tournament start' : '' }}.</p>
+        <p class="sheet-info" v-else>{{ dealerName(mt.dealerId) }} since {{ fmtTime(tStart(mt)) }}, {{ fmtDur(st(mt).elapsed) }} at this table. {{ statusText(mt) }}.</p>
         <label for="t-in">Sat down at</label>
         <div class="inline">
           <input id="t-in" class="field" type="time" v-model="modal.time">
           <button class="btn" @click="saveTime">Set time</button>
         </div>
-        <button class="btn" style="width:100%;margin-top:8px" @click="resetTable(mt); modal=null">Reset timer to now</button>
+        <button class="btn" style="width:100%;margin-top:8px" v-if="!waitingForSession(mt)" @click="resetTable(mt); modal=null">{{ st(mt).kind==='waiting' ? 'Start now' : 'Reset timer to now' }}</button>
       </template>
       <p v-else class="sheet-info">No dealer seated.</p>
       <label for="e-name">Table name</label>
@@ -381,6 +414,7 @@ function defaultState() {
   return {
     version: 2,
     settings: { warn: 5 },
+    session: { startAt: null },
     categories: [cs, sp],
     tables: [mk('CS', cs.id), mk('A', sp.id), mk('B', sp.id), mk('C', sp.id)],
     dealers: [],
@@ -392,7 +426,7 @@ function loadState() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return defaultState();
     const p = JSON.parse(raw), d = defaultState();
-    return { ...d, ...p, settings: { ...d.settings, ...(p.settings || {}) } };
+    return { ...d, ...p, settings: { ...d.settings, ...(p.settings || {}) }, session: { ...d.session, ...(p.session || {}) } };
   } catch (e) { return defaultState(); }
 }
 
@@ -402,7 +436,7 @@ createApp({
     return {
       s, now: Date.now(), tab: 'tables', filter: 'all', reorder: false, modal: null,
       newDealer: '', newCategory: '', newTable: '', newTableCat: s.categories[0]?.id || null,
-      editId: null, editName: '', armed: null, wake: false, toast: ''
+      editId: null, editName: '', armed: null, sessionTime: s.session && s.session.startAt ? new Date(s.session.startAt).toTimeString().slice(0, 5) : '', wake: false, toast: ''
     };
   },
   computed: {
@@ -412,9 +446,16 @@ createApp({
       return this.s.tables.filter(t => t.dealerId).map(t => ({ t, d: this.dealerById(t.dealerId) })).filter(o => o.d);
     },
     mt() { return this.modal ? this.tableById(this.modal.tableId) : null; },
+    sessionPending() { const a = this.s.session.startAt; return !!a && this.now < a; },
+    sessionText() {
+      const a = this.s.session.startAt;
+      if (!a) return 'Not set. Timers start as soon as a dealer is seated.';
+      if (this.now < a) return `Starts at ${this.fmtTime(a)}, in ${this.fmtDur(a - this.now + 59999)}.`;
+      return `Started at ${this.fmtTime(a)}.`;
+    },
     seatedCount() { return Object.keys(this.seatedMap).length; },
     available() {
-      return this.s.dealers.filter(d => !d.off && !this.seatedMap[d.id]).sort((a, b) => (a.restSince || 0) - (b.restSince || 0));
+      return this.s.dealers.filter(d => !d.off && !this.seatedMap[d.id]).sort((a, b) => this.rStart(a) - this.rStart(b) || (a.restSince || 0) - (b.restSince || 0));
     },
     offDuty() { return this.s.dealers.filter(d => d.off); },
     counts() {
@@ -469,34 +510,40 @@ createApp({
     st(t) {
       const interval = (this.catById(t.catId)?.interval || 30) * MIN;
       if (!t.dealerId) return { kind: 'vacant', elapsed: 0, interval, remain: 0, over: 0 };
-      const elapsed = this.now - t.startedAt, remain = interval - elapsed;
+      const elapsed = this.now - this.tStart(t), remain = interval - elapsed;
+      if (elapsed < 0) return { kind: 'waiting', elapsed: 0, until: -elapsed, interval, remain: interval, over: 0 };
       const kind = remain <= 0 ? 'over' : remain <= this.s.settings.warn * MIN ? 'soon' : 'ok';
       return { kind, elapsed, interval, remain, over: -remain };
     },
     statusText(t) {
       const x = this.st(t);
       if (x.kind === 'vacant') return 'Empty';
+      if (x.kind === 'waiting') return 'Starts ' + this.fmtTime(this.tStart(t));
       if (x.kind === 'over') return 'Over ' + this.fmtDur(x.over);
       if (x.kind === 'soon') return 'Swap in ' + Math.max(1, Math.ceil(x.remain / MIN)) + 'm';
-      return 'Next ' + this.fmtTime(t.startedAt + x.interval);
+      return 'Next ' + this.fmtTime(this.tStart(t) + x.interval);
     },
 
     // ---------- dealer state ----------
     dStatus(d) { return d.off ? 'off' : this.seatedMap[d.id] ? 'table' : 'rest'; },
     dPill(d) {
       const k = this.dStatus(d);
-      if (k === 'table') { const t = this.seatedMap[d.id]; return t.name + ' ' + this.fmtDur(this.now - t.startedAt); }
+      if (k === 'table') {
+        const t = this.seatedMap[d.id];
+        const s0 = this.tStart(t);
+        return this.now < s0 ? t.name + ' from ' + this.fmtTime(s0) : t.name + ' ' + this.fmtDur(this.now - s0);
+      }
       if (k === 'rest') return 'Rest ' + this.fmtDur(this.restMs(d));
       return 'Off';
     },
-    restMs(d) { return d.restSince ? this.now - d.restSince : 0; },
-    workMs(d) { const t = this.seatedMap[d.id]; return d.accWork + (t ? Math.max(0, this.now - t.startedAt) : 0); },
+    restMs(d) { return d.restSince ? Math.max(0, this.now - this.rStart(d)) : 0; },
+    workMs(d) { const t = this.seatedMap[d.id]; return d.accWork + (t ? Math.max(0, this.now - this.tStart(t)) : 0); },
     breakMs(d) { return d.accBreak + (this.dStatus(d) === 'rest' ? this.restMs(d) : 0); },
 
     // ---------- seating ----------
     unseat(t, now) {
       const d = this.dealerById(t.dealerId);
-      if (d) { d.accWork += Math.max(0, now - t.startedAt); d.lastTableId = t.id; d.restSince = now; }
+      if (d) { d.accWork += Math.max(0, now - this.tStart(t)); d.lastTableId = t.id; d.restSince = now; }
       t.dealerId = null; t.startedAt = null;
       return d;
     },
@@ -515,7 +562,7 @@ createApp({
           this.log(other.name, `${next.name} moved to ${t.name}`);
         }
         if (next.off) next.off = false;
-        else if (next.restSince) next.accBreak += now - next.restSince;
+        else if (next.restSince) next.accBreak += Math.max(0, now - this.rStart(next));
         next.restSince = null;
         t.dealerId = dealerId; t.startedAt = now;
       }
@@ -524,11 +571,47 @@ createApp({
       this.log(t.name, text);
       if (from) this.showToast(`${next.name} moved from ${from.name}. ${from.name} is now empty.`);
     },
+    // ---------- tournament start ----------
+    floor() { return this.s.session.startAt || 0; },
+    tStart(t) { return Math.max(t.startedAt || 0, this.floor()); },
+    rStart(d) { return Math.max(d.restSince || 0, this.floor()); },
+    waitingForSession(t) { return this.sessionPending && (t.startedAt || 0) <= this.s.session.startAt; },
+    timeToTs(str) {
+      const [h, m] = (str || '').split(':').map(Number);
+      if (isNaN(h) || isNaN(m)) return null;
+      const d = new Date(); d.setHours(h, m, 0, 0);
+      // yesterday / today / tomorrow, whichever is closest to now
+      const base = d.getTime(), day = 24 * 60 * MIN, now = Date.now();
+      return [base - day, base, base + day].reduce((a, b) => Math.abs(b - now) < Math.abs(a - now) ? b : a);
+    },
+    setSession() {
+      const ts = this.timeToTs(this.sessionTime);
+      if (ts === null) { this.showToast('Enter a start time first'); return; }
+      this.s.session.startAt = ts;
+      this.log('Tournament', `Start time set to ${this.fmtTime(ts)}`);
+      this.showToast(`Tournament start set to ${this.fmtTime(ts)}`);
+    },
+    startSessionNow() {
+      const now = Date.now();
+      this.s.session.startAt = now;
+      this.sessionTime = this.fmtTime(now);
+      this.log('Tournament', 'Started');
+      this.showToast('Tournament started');
+    },
+    clearSession() {
+      // keep what has been counted so far; nothing jumps back to before the old start time
+      const f = Math.min(this.floor(), Date.now());
+      this.s.tables.forEach(t => { if (t.dealerId) t.startedAt = Math.max(t.startedAt, f); });
+      this.s.dealers.forEach(d => { if (d.restSince) d.restSince = Math.max(d.restSince, f); });
+      this.s.session.startAt = null;
+      this.sessionTime = '';
+      this.log('Tournament', 'Start time cleared');
+    },
     onSelect(t, e) { this.seat(t, e.target.value || null); },
     resetTable(t) {
       if (!t.dealerId) return;
       const now = Date.now(), d = this.dealerById(t.dealerId);
-      d.accWork += Math.max(0, now - t.startedAt);
+      d.accWork += Math.max(0, now - this.tStart(t));
       t.startedAt = now;
       this.log(t.name, `Timer reset (${d.name})`);
     },
@@ -539,15 +622,12 @@ createApp({
     },
     openTable(t) {
       this.armed = null;
-      this.modal = { tableId: t.id, time: this.fmtTime(t.startedAt), name: t.name, catId: t.catId };
+      this.modal = { tableId: t.id, time: t.startedAt ? this.fmtTime(this.tStart(t)) : '', name: t.name, catId: t.catId };
     },
     saveTime() {
       const t = this.mt;
-      const [h, m] = (this.modal.time || '').split(':').map(Number);
-      if (!t || !t.dealerId || isNaN(h) || isNaN(m)) return;
-      const d = new Date(); d.setHours(h, m, 0, 0);
-      let ts = d.getTime();
-      if (ts > Date.now() + MIN) ts -= 24 * 60 * MIN;
+      const ts = this.timeToTs(this.modal.time);
+      if (!t || !t.dealerId || ts === null) return;
       t.startedAt = ts;
       this.log(t.name, `Start time set to ${this.modal.time}`);
       this.showToast(`${t.name}: start time set to ${this.modal.time}`);
@@ -623,7 +703,7 @@ createApp({
     clockOut(d) {
       const now = Date.now(), t = this.seatedMap[d.id];
       if (t) { this.unseat(t, now); this.log(t.name, `${d.name} left (clocked out)`); this.showToast(`${t.name} has no dealer now`); }
-      else if (d.restSince) d.accBreak += now - d.restSince;
+      else if (d.restSince) d.accBreak += Math.max(0, now - this.rStart(d));
       d.off = true; d.restSince = null;
     },
     clockIn(d) { d.off = false; d.restSince = Date.now(); },
@@ -642,7 +722,7 @@ createApp({
       this.editId = null;
     },
     resetAll() {
-      this.s = defaultState(); this.filter = 'all'; this.newTableCat = this.s.categories[0].id;
+      this.s = defaultState(); this.filter = 'all'; this.sessionTime = ''; this.newTableCat = this.s.categories[0].id;
       this.showToast('All data erased');
     },
 
